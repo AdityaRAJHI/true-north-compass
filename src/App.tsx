@@ -10,6 +10,7 @@ import Plan from "./pages/Plan";
 import Journal from "./pages/Journal";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import PlatoBotPopup from "./components/PlatoBotPopup";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <PlatoBotPopup />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/discover" element={<Discover />} />
