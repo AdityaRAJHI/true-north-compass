@@ -22,17 +22,30 @@ interface Message {
   isUser: boolean;
 }
 
-const reflectiveQuestions = [
-  "What activities make you lose track of time?",
-  "When do you feel most alive and energized?",
-  "What did you love doing as a child that you've stopped doing?",
-  "If you had unlimited resources, how would you spend your days?",
-  "What are you naturally good at that others often compliment you on?",
-  "What would you regret not trying or becoming if you looked back at the end of your life?",
-  "What problems in the world deeply bother you that you wish you could solve?",
-  "What fears are holding you back from pursuing what matters most?",
-  "What would you do differently if no one would judge you?",
-  "What values are non-negotiable in how you live and work?"
+// Soul-searching questions focused on discovering purpose
+const soulQuestions = [
+  "What activities make you feel most alive and present?",
+  "If money and time were no object, what would you dedicate your life to?",
+  "What did you love doing as a child that you've lost touch with?",
+  "What problem in the world deeply bothers you that you wish you could solve?",
+  "When do you experience 'flow state' where time seems to disappear?",
+  "What would you regret not doing or becoming when looking back at your life?",
+  "What unique strengths or talents do others recognize in you?",
+  "What cause or purpose feels bigger than yourself?",
+  "What would your ideal day look like if you were living your purpose?",
+  "What fear is holding you back from pursuing what matters most to you?"
+];
+
+// Goal clarity questions to help define the ultimate goal
+const goalQuestions = [
+  "Can you describe your ultimate goal or purpose in a single sentence?",
+  "Why is this goal meaningful to you personally?",
+  "How would achieving this goal transform your life?",
+  "What small step could you take today toward this goal?",
+  "What obstacles do you anticipate, and how might you overcome them?",
+  "Who could support you on this journey?",
+  "How will you know when you've succeeded?",
+  "What skills or knowledge will you need to develop?"
 ];
 
 const PlatoBotPopup = () => {
@@ -41,6 +54,9 @@ const PlatoBotPopup = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasDefinedGoal, setHasDefinedGoal] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [questionType, setQuestionType] = useState<'intro' | 'soul' | 'goal'>('intro');
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,11 +70,12 @@ const PlatoBotPopup = () => {
           setMessages([
             { 
               id: `intro-0`, 
-              content: "Hello, I'm PlatoBot. Would you like to reflect on a thought-provoking question today?", 
+              content: "Hello, I'm PlatoBot. I'm here to help you discover your true purpose and ultimate goal in life. Would you like to explore some soul-searching questions to help clarify your path?", 
               isUser: false 
             }
           ]);
           setIsInitialized(true);
+          setQuestionType('intro');
         }, 1500);
       }, 500);
     }
@@ -81,25 +98,126 @@ const PlatoBotPopup = () => {
     setMessages([...messages, userMessage]);
     setInputMessage("");
     
-    // Simulate bot response
-    setTimeout(() => {
-      setIsTyping(true);
+    // Check for goal definition in intro phase
+    if (questionType === 'intro') {
+      const lowerCaseMessage = inputMessage.toLowerCase();
+      const affirmativeResponses = ['yes', 'yeah', 'sure', 'okay', 'ok', 'yep', 'y', 'definitely', 'absolutely'];
+      const negativeResponses = ['no', 'nope', 'n', 'not', 'don\'t', 'dont'];
       
       setTimeout(() => {
-        setIsTyping(false);
+        setIsTyping(true);
         
-        // Generate response or random question
-        const botResponse = {
-          id: `bot-${Date.now()}`,
-          content: Math.random() > 0.5 
-            ? `That's an interesting perspective. ${reflectiveQuestions[Math.floor(Math.random() * reflectiveQuestions.length)]}`
-            : "I appreciate you sharing that. Tell me more about why you feel this way.",
-          isUser: false
-        };
+        setTimeout(() => {
+          setIsTyping(false);
+          
+          if (affirmativeResponses.some(resp => lowerCaseMessage.includes(resp))) {
+            // User agreed to explore soul questions
+            setMessages(prev => [
+              ...prev, 
+              {
+                id: `bot-goal-${Date.now()}`,
+                content: "Great! First, can you tell me what you believe your ultimate goal or purpose in life might be? Don't worry if you're not sure yet, we'll explore together.",
+                isUser: false
+              }
+            ]);
+            setQuestionType('goal');
+          } else if (negativeResponses.some(resp => lowerCaseMessage.includes(resp))) {
+            // User declined soul questions
+            setMessages(prev => [
+              ...prev, 
+              {
+                id: `bot-decline-${Date.now()}`,
+                content: "That's okay. I'm here whenever you're ready to explore deeper questions about your path. Feel free to ask me anything else in the meantime.",
+                isUser: false
+              }
+            ]);
+          } else {
+            // Unclear response, assume they want to continue
+            setMessages(prev => [
+              ...prev, 
+              {
+                id: `bot-goal-${Date.now()}`,
+                content: "Let's start by exploring what might be your ultimate goal or purpose. Do you have an idea of what that might be for you?",
+                isUser: false
+              }
+            ]);
+            setQuestionType('goal');
+          }
+        }, 1500);
+      }, 500);
+    } 
+    // User responded to goal definition request
+    else if (questionType === 'goal') {
+      setTimeout(() => {
+        setIsTyping(true);
         
-        setMessages(prev => [...prev, botResponse]);
-      }, 1500 + Math.random() * 1000);
-    }, 500);
+        setTimeout(() => {
+          setIsTyping(false);
+          
+          // Check if the response seems like a clear goal statement
+          const hasDefinedGoalInMsg = inputMessage.length > 15 && !inputMessage.includes('?') && !inputMessage.toLowerCase().includes('not sure') && !inputMessage.toLowerCase().includes('i don\'t know');
+          
+          if (hasDefinedGoalInMsg) {
+            setHasDefinedGoal(true);
+            setMessages(prev => [
+              ...prev, 
+              {
+                id: `bot-goal-defined-${Date.now()}`,
+                content: `That's a meaningful goal. Let's explore it deeper to make sure it truly resonates with your authentic self. ${goalQuestions[currentQuestion]}`,
+                isUser: false
+              }
+            ]);
+            setCurrentQuestion(prev => (prev + 1) % goalQuestions.length);
+          } else {
+            // User seems uncertain about their goal
+            setMessages(prev => [
+              ...prev, 
+              {
+                id: `bot-soul-question-${Date.now()}`,
+                content: `It's completely normal to be uncertain about your purpose. Let's explore some deeper questions to help you discover it. ${soulQuestions[currentQuestion]}`,
+                isUser: false
+              }
+            ]);
+            setQuestionType('soul');
+            setCurrentQuestion(prev => (prev + 1) % soulQuestions.length);
+          }
+        }, 1500);
+      }, 500);
+    }
+    // Handle soul question responses
+    else if (questionType === 'soul') {
+      setTimeout(() => {
+        setIsTyping(true);
+        
+        setTimeout(() => {
+          setIsTyping(false);
+          
+          // After 3 soul questions, check if they're ready to define a goal
+          if (currentQuestion > 2 && Math.random() > 0.5) {
+            setMessages(prev => [
+              ...prev, 
+              {
+                id: `bot-goal-prompt-${Date.now()}`,
+                content: "Based on your reflections, do you feel ready to articulate your ultimate goal or purpose? What might it be?",
+                isUser: false
+              }
+            ]);
+            setQuestionType('goal');
+          } else {
+            // Continue with soul questions
+            setMessages(prev => [
+              ...prev, 
+              {
+                id: `bot-soul-question-${Date.now()}`,
+                content: `Thank you for sharing. Let's explore another dimension. ${soulQuestions[currentQuestion]}`,
+                isUser: false
+              }
+            ]);
+            setCurrentQuestion(prev => (prev + 1) % soulQuestions.length);
+          }
+        }, 1500);
+      }, 500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -109,7 +227,9 @@ const PlatoBotPopup = () => {
   };
 
   const askRandomQuestion = () => {
-    const randomQuestion = reflectiveQuestions[Math.floor(Math.random() * reflectiveQuestions.length)];
+    const question = hasDefinedGoal ? 
+      goalQuestions[Math.floor(Math.random() * goalQuestions.length)] : 
+      soulQuestions[Math.floor(Math.random() * soulQuestions.length)];
     
     setIsTyping(true);
     setTimeout(() => {
@@ -118,7 +238,7 @@ const PlatoBotPopup = () => {
         ...prev, 
         { 
           id: `bot-question-${Date.now()}`, 
-          content: randomQuestion, 
+          content: question, 
           isUser: false 
         }
       ]);
@@ -131,13 +251,16 @@ const PlatoBotPopup = () => {
     setTimeout(() => {
       setMessages([]);
       setIsInitialized(false);
+      setHasDefinedGoal(false);
+      setCurrentQuestion(0);
+      setQuestionType('intro');
     }, 300);
   };
 
   const handleOpen = () => {
     setIsOpen(true);
-    toast("PlatoBot is ready to chat with you", {
-      description: "Ask a question or get a reflective prompt",
+    toast("PlatoBot is ready to help you find your purpose", {
+      description: "Explore soul-searching questions to discover your path",
       duration: 3000,
     });
   };
@@ -192,7 +315,7 @@ const PlatoBotPopup = () => {
               onClick={askRandomQuestion}
               className="w-full border-soul-peach/30 bg-white/80 hover:bg-white text-foreground"
             >
-              Ask me a reflective question
+              {hasDefinedGoal ? "Explore my goal deeper" : "Ask me a soul question"}
             </Button>
           </div>
         )}
