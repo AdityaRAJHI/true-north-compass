@@ -1,12 +1,17 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, Star, Calendar } from "lucide-react";
+import { ChevronRight, Star, Calendar, MoreHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import Task from "@/components/Task";
 import QuoteCard from "@/components/QuoteCard";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import Navigation from "@/components/Navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Task = {
   id: string;
@@ -49,10 +54,8 @@ const Index = () => {
   const [streak, setStreak] = useState(3);
 
   useEffect(() => {
-    // Simulate loading
     const timer = setTimeout(() => {
       setIsLoading(false);
-      // Set random quote
       setDailyQuote(quotes[Math.floor(Math.random() * quotes.length)]);
     }, 1000);
 
@@ -97,9 +100,27 @@ const Index = () => {
             <h1 className="text-3xl font-semibold text-foreground">Welcome back</h1>
             <p className="text-muted-foreground">Your soul journey continues</p>
           </div>
-          <div className="flex items-center bg-white/80 px-3 py-2 rounded-full border border-soul-peach/30">
-            <Star className="text-soul-amber h-4 w-4 mr-1" />
-            <span className="text-sm font-medium">{streak} day streak</span>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center bg-white/80 px-3 py-2 rounded-full border border-soul-peach/30">
+              <Star className="text-soul-amber h-4 w-4 mr-1" />
+              <span className="text-sm font-medium">{streak} day streak</span>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center justify-center w-8 h-8 rounded-full bg-white/80 border border-soul-peach/30">
+                <MoreHorizontal size={16} className="text-soul-amber" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-md border border-soul-peach/30">
+                <DropdownMenuItem asChild>
+                  <Link to="/plan" className="cursor-pointer">Dream Plan</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/journal" className="cursor-pointer">Journal</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/chat" className="cursor-pointer">PlatoBot</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </motion.div>
 
